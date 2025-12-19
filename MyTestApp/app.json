@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "React-Native-Note-Taking-App",
-    "slug": "React-Native-Note-Taking-App",
+    "name": "MyTestApp",
+    "slug": "MyTestApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "reactnativenotetakingapp",
+    "scheme": "mytestapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -19,10 +19,10 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.andile_45.ReactNativeNoteTakingApp"
+      "predictiveBackGestureEnabled": false
     },
     "web": {
+      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
