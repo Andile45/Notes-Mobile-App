@@ -23,6 +23,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedUser = await AsyncStorage.getItem('user');
         if (storedUser) {
           setUser(JSON.parse(storedUser));
+        } else {
+          // Auto-login a dummy user for development
+          console.log("Auto-logging in dummy user.");
+          const dummyUser = { email: "dummy@example.com", username: "dummyuser", id: "dummy123" };
+          setUser(dummyUser);
+          await AsyncStorage.setItem('user', JSON.stringify(dummyUser));
+          // Also add the dummy user to the 'users' array if it doesn't exist
+          const storedUsers = await AsyncStorage.getItem('users');
+          let users = storedUsers ? JSON.parse(storedUsers) : [];
+          if (!users.some((u: any) => u.email === dummyUser.email)) {
+            users.push({ ...dummyUser, password: "dummypass" }); // Add password for consistency if needed later
+            await AsyncStorage.setItem('users', JSON.stringify(users));
+          }
         }
       } catch (error) {
         console.error("Failed to load user from AsyncStorage", error);
