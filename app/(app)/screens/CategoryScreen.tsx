@@ -1,10 +1,14 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, Alert, TouchableOpacity } from 'react-native';
 import { Stack } from 'expo-router';
+import { colors, common } from '../../../constants/theme';
 import { useCategories } from '../../../contexts/CategoryContext';
+import { ConfirmModal } from '../../../components/ConfirmModal';
 
 const CategoryScreen: React.FC = () => {
   const [categoryName, setCategoryName] = useState('');
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const { categories, addCategory, deleteCategory } = useCategories();
 
   const handleAddCategory = async () => {
@@ -20,33 +24,38 @@ const CategoryScreen: React.FC = () => {
     }
   };
 
-  const handleDeleteCategory = (id: string) => {
-    Alert.alert(
-      'Delete Category',
-      'Are you sure you want to delete this category? This will not delete notes associated with it.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', onPress: () => deleteCategory(id) },
-      ]
-    );
+  const handleDeleteConfirm = () => {
+    if (deleteTargetId) {
+      deleteCategory(deleteTargetId);
+      setDeleteTargetId(null);
+    }
   };
 
   return (
     <View style={styles.container}>
+      <ConfirmModal
+        visible={deleteTargetId !== null}
+        title="Delete Category"
+        message="Are you sure you want to delete this category? Notes in this category will not be deleted."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTargetId(null)}
+        variant="destructive"
+      />
       <Stack.Screen options={{ title: 'Categories' }} />
       <Text style={styles.title}>Manage Categories</Text>
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="New Category Name"
+          placeholderTextColor={colors.muted}
           value={categoryName}
           onChangeText={setCategoryName}
         />
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity onPress={handleAddCategory}>
-            <Text style={styles.buttonText}>Add Category</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.primaryButton} onPress={handleAddCategory}>
+          <Text style={styles.primaryButtonText}>Add Category</Text>
+        </TouchableOpacity>
       </View>
       <FlatList
         data={categories}
@@ -54,11 +63,18 @@ const CategoryScreen: React.FC = () => {
         renderItem={({ item }) => (
           <View style={styles.categoryItem}>
             <Text style={styles.categoryText}>{item.name}</Text>
-            <TouchableOpacity style={styles.deleteButton} onPress={() => handleDeleteCategory(item.id)}>
-              <Text style={styles.deleteButtonText}>Delete</Text>
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => setDeleteTargetId(item.id)}>
+              <Text style={styles.secondaryButtonText}>Remove</Text>
             </TouchableOpacity>
           </View>
         )}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Ionicons name="folder-open-outline" size={56} color={colors.muted} style={styles.emptyIcon} />
+            <Text style={styles.emptyText}>No categories yet.</Text>
+            <Text style={styles.emptySubtext}>Create one above to organize your notes.</Text>
+          </View>
+        }
       />
     </View>
   );
@@ -66,96 +82,73 @@ const CategoryScreen: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#F0F2F5', // Light Gray background
+    ...common.screen,
   },
   title: {
-    fontSize: 32, // Larger title
-    fontWeight: 'bold',
-    marginBottom: 30, // More space below title
-    textAlign: 'center',
-    color: '#2C3E50', // Darker text for emphasis
-    fontFamily: 'Poppins-Regular',
+    ...common.title,
   },
   inputContainer: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
     alignItems: 'center',
+    gap: 12,
   },
   input: {
     flex: 1,
-    height: 55, // Taller input fields
-    borderColor: '#DCDCDC', // Lighter border
-    borderWidth: 1,
-    borderRadius: 12, // More rounded corners
-    paddingHorizontal: 15,
-    backgroundColor: '#FFFFFF',
-    color: '#34495E',
-    marginRight: 10,
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3, // Elevation for Android
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    ...common.input,
+    marginBottom: 0,
   },
-  buttonContainer: {
-    backgroundColor: '#4CAF50', // Green button
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  primaryButton: {
+    ...common.primaryButton,
+    paddingVertical: 14,
+    minWidth: 120,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
+  primaryButtonText: {
+    ...common.primaryButtonText,
     fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular', // Apply Poppins font
   },
   categoryItem: {
+    ...common.card,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 18,
-    borderRadius: 12,
     marginBottom: 12,
-    borderColor: '#E0E0E0',
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
   },
   categoryText: {
-    fontSize: 19,
-    color: '#2C3E50',
-    fontWeight: '500',
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    fontSize: 17,
+    color: colors.title,
+    fontWeight: '600',
+    fontFamily: 'Poppins-Regular',
   },
-  deleteButton: {
-    backgroundColor: '#E74C3C', // Red delete button
-    borderRadius: 8,
+  secondaryButton: {
+    ...common.secondaryButton,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    paddingHorizontal: 14,
+    borderRadius: 10,
   },
-  deleteButtonText: {
-    color: '#FFFFFF',
+  secondaryButtonText: {
+    ...common.secondaryButtonText,
     fontSize: 14,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular', // Apply Poppins font
+  },
+  emptyWrap: {
+    alignItems: 'center',
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+  },
+  emptyIcon: {
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: colors.title,
+    fontWeight: '600',
+    fontFamily: 'Poppins-Regular',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 15,
+    color: colors.muted,
+    fontFamily: 'Poppins-Regular',
   },
 });
 

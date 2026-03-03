@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { colors, common } from '../../../constants/theme';
 import { useAuth } from '../../../contexts/AuthContext';
 
 const ProfileScreen: React.FC = () => {
@@ -29,113 +30,82 @@ const ProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: 'Profile' }} />
-      <Text style={styles.title}>Profile Management</Text>
+      <Text style={styles.title}>Profile</Text>
+      <Text style={styles.label}>Email</Text>
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor={colors.muted}
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Username</Text>
       <TextInput
         style={styles.input}
         placeholder="Username"
+        placeholderTextColor={colors.muted}
         value={username}
         onChangeText={setUsername}
         autoCapitalize="none"
       />
+      <Text style={styles.label}>Password</Text>
       <TextInput
         style={styles.input}
         placeholder="Password"
+        placeholderTextColor={colors.muted}
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleUpdate}>
-          <Text style={styles.buttonText}>Update Profile</Text>
-        </TouchableOpacity>
-      </View>
-      <View style={styles.logoutButtonContainer}>
-        <TouchableOpacity onPress={logout}>
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      <TouchableOpacity style={styles.primaryButton} onPress={handleUpdate}>
+        <Text style={styles.primaryButtonText}>Update Profile</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.secondaryButton} onPress={logout}>
+        <Text style={styles.secondaryButtonText}>Logout</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: 80, // Increased padding for better distribution
+    backgroundColor: colors.screen,
+  },
+  content: {
+    padding: 24,
     paddingBottom: 40,
-    backgroundColor: '#F0F2F5', // Light Gray background
   },
   title: {
-    fontSize: 32, // Larger title
-    fontWeight: 'bold',
-    marginBottom: 40, // More space below title
-    textAlign: 'center',
-    color: '#2C3E50', // Darker text for emphasis
+    ...common.title,
+  },
+  label: {
+    fontSize: 14,
+    color: colors.title,
+    fontWeight: '600',
+    marginBottom: 6,
     fontFamily: 'Poppins-Regular',
   },
   input: {
-    height: 55, // Taller input fields
-    borderColor: '#DCDCDC', // Lighter border
-    borderWidth: 1,
-    borderRadius: 12, // More rounded corners
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    backgroundColor: '#FFFFFF',
-    color: '#34495E',
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3, // Elevation for Android
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    ...common.input,
   },
-  buttonContainer: {
-    backgroundColor: '#3498DB', // Blue update button
-    borderRadius: 12,
-    paddingVertical: 15,
-    marginVertical: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  primaryButton: {
+    ...common.primaryButton,
+    marginTop: 8,
+    marginBottom: 12,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular',
+  primaryButtonText: {
+    ...common.primaryButtonText,
   },
-  logoutButtonContainer: {
-    backgroundColor: '#E74C3C', // Red logout button
-    borderRadius: 12,
-    paddingVertical: 15,
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  secondaryButton: {
+    ...common.secondaryButton,
   },
-  logoutButtonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular',
+  secondaryButtonText: {
+    ...common.secondaryButtonText,
   },
 });
 
