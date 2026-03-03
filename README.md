@@ -1,50 +1,92 @@
-# Welcome to your Expo app 👋
+# Notes Mobile App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native note-taking app built with **Expo** and **expo-router**. Create notes, organize them with categories, and search or sort your list. Includes authentication and a clean UI with **Poppins** font and custom modals.
 
-## Get started
+## Features
 
-1. Install dependencies
+- **Authentication** – Register and log in (credentials stored locally)
+- **Notes** – Create, read, update, and delete notes with title, body, and category
+- **Categories** – Manage categories; assign each note to a category
+- **Search** – Search notes by title or content (every word in the query must match)
+- **Sort** – Sort notes by date (newest or oldest first)
+- **Filter** – Filter notes by category
+- **UI** – Themed screens (cyan/teal), Poppins font, confirmation modals for delete actions, relative dates (Today, Yesterday, etc.), category pills on note cards
+
+## Tech Stack
+
+- **Expo** (SDK 54) with **expo-router** (file-based routing)
+- **React Native** with TypeScript
+- **AsyncStorage** for local auth and data persistence
+- **Poppins** & **Inter** fonts (loaded via expo-font)
+- **expo-haptics** for feedback on key actions
+
+## Project Structure
+
+```
+app/
+  _layout.tsx          # Root layout, auth check, font loading
+  index.tsx             # Redirect to app or login
+  (auth)/               # Auth group: Login, Register
+  (app)/                # Main app: notes list, add/edit/detail, categories, profile
+constants/
+  theme.ts              # Colors, typography, shared styles
+contexts/
+  AuthContext.tsx       # Auth state and login/register
+  CategoryContext.tsx   # Categories CRUD
+  NoteContext.tsx       # Notes CRUD
+components/
+  ConfirmModal.tsx      # Reusable confirmation dialog
+hooks/
+  useInitialAuth.ts     # Waits for initial auth check before redirecting
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v18+)
+- npm or yarn
+- [Expo Go](https://expo.dev/go) on your device (optional, for quick testing)
+
+### Install and run
+
+1. **Install dependencies**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+2. **Start the development server**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Open the app**
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+   - Press **a** for Android emulator  
+   - Press **i** for iOS simulator  
+   - Or scan the QR code with **Expo Go** on your device  
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+   Use **tunnel** only if LAN doesn’t work: `npx expo start --tunnel`
 
-## Get a fresh project
+### Scripts
 
-When you're ready, run:
+| Command            | Description                |
+|--------------------|----------------------------|
+| `npm start`        | Start Expo dev server      |
+| `npm run android`  | Run on Android             |
+| `npm run ios`      | Run on iOS                 |
+| `npm run web`      | Run in browser             |
+| `npm run lint`     | Run ESLint                 |
 
-```bash
-npm run reset-project
-```
+## Data and auth
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+- **Auth** and **notes/categories** are stored on the device using **AsyncStorage** (no backend).
+- Each user has their own notes and categories; switching account clears in-memory data and reloads from storage for the signed-in user.
 
 ## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- [Expo documentation](https://docs.expo.dev/)
+- [expo-router](https://docs.expo.dev/router/introduction/) – file-based routing
+- [React Native](https://reactnative.dev/)
