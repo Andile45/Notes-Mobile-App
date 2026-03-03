@@ -1,7 +1,9 @@
+import * as Haptics from 'expo-haptics';
 import { Picker } from '@react-native-picker/picker';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { colors, common } from '../../../constants/theme';
 import { useCategories } from '../../../contexts/CategoryContext';
 import { useNotes } from '../../../contexts/NoteContext';
 
@@ -24,44 +26,46 @@ const EditNoteScreen: React.FC = () => {
     }
   }, [noteToEdit]);
 
+  const canSubmit = text.trim().length > 0 && selectedCategory.length > 0;
+
   const handleUpdateNote = async () => {
-    if (noteToEdit && text.trim() && selectedCategory) {
-      await updateNote(noteToEdit.id, title.trim(), text.trim(), selectedCategory);
-      Alert.alert('Success', 'Note updated successfully!');
-      router.back();
-    } else {
-      Alert.alert('Error', 'Please enter note text and select a category.');
-    }
+    if (!noteToEdit || !canSubmit) return;
+    await updateNote(noteToEdit.id, title.trim(), text.trim(), selectedCategory);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    Alert.alert('Success', 'Note updated successfully!');
+    router.back();
   };
 
   if (!noteToEdit) {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, { padding: 24, justifyContent: 'center' }]}>
         <Stack.Screen options={{ title: 'Note Not Found' }} />
-        <Text style={styles.errorText}>Note not found for editing!</Text>
+        <Text style={styles.errorText}>Note not found for editing.</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <Stack.Screen options={{ title: 'Edit Note' }} />
       <Text style={styles.title}>Edit Note</Text>
       <TextInput
         style={styles.input}
         placeholder="Title (Optional)"
+        placeholderTextColor={colors.muted}
         value={title}
         onChangeText={setTitle}
       />
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Note Text"
+        placeholderTextColor={colors.muted}
         value={text}
         onChangeText={setText}
         multiline
         textAlignVertical="top"
       />
-      <Text style={styles.pickerLabel}>Category:</Text>
+      <Text style={styles.pickerLabel}>Category</Text>
       <View style={styles.pickerContainer}>
         <Picker
           selectedValue={selectedCategory}
@@ -74,98 +78,86 @@ const EditNoteScreen: React.FC = () => {
           ))}
         </Picker>
       </View>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleUpdateNote}>
-          <Text style={styles.buttonText}>Update Note</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+      {!canSubmit && (
+        <Text style={styles.hint}>Enter note text and select a category to save.</Text>
+      )}
+      <TouchableOpacity
+        style={[styles.primaryButton, !canSubmit && styles.primaryButtonDisabled]}
+        onPress={handleUpdateNote}
+        disabled={!canSubmit}
+      >
+        <Text style={styles.primaryButtonText}>Update Note</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#F0F2F5', // Light Gray background
+    backgroundColor: colors.screen,
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 40,
   },
   title: {
-    fontSize: 32, // Larger title
-    fontWeight: 'bold',
-    marginBottom: 30, // More space below title
-    textAlign: 'center',
-    color: '#2C3E50', // Darker text for emphasis
-    fontFamily: 'Poppins-Regular',
+    ...common.title,
   },
   input: {
-    height: 55, // Taller input fields
-    borderColor: '#DCDCDC', // Lighter border
-    borderWidth: 1,
-    borderRadius: 12, // More rounded corners
-    marginBottom: 15,
-    paddingHorizontal: 15,
-    backgroundColor: '#FFFFFF',
-    color: '#34495E',
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3, // Elevation for Android
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    ...common.input,
   },
   textArea: {
-    height: 150, // Taller text area
-    paddingTop: 15,
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    height: 140,
+    paddingTop: 14,
   },
   pickerLabel: {
-    fontSize: 18, // Larger label
-    color: '#2C3E50',
-    marginBottom: 10,
-    fontWeight: '500',
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    fontSize: 16,
+    color: colors.title,
+    marginBottom: 8,
+    fontWeight: '600',
+    fontFamily: 'Poppins-Regular',
   },
   pickerContainer: {
-    borderColor: '#DCDCDC',
+    borderColor: colors.inputBorder,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 15,
     marginBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     overflow: 'hidden',
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3, // Elevation for Android
-  },
-  picker: {
-    height: 55, // Match input height
-    color: '#34495E',
-    fontFamily: 'Inter-Regular', // Apply Inter font
-  },
-  buttonContainer: {
-    backgroundColor: '#4CAF50', // Green button
-    borderRadius: 12,
-    paddingVertical: 15,
+    elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
   },
-  buttonText: {
-    color: '#FFFFFF',
-    textAlign: 'center',
-    fontSize: 18,
-    fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular', // Apply Poppins font
+  picker: {
+    height: 52,
+    color: colors.body,
+    fontFamily: 'Poppins-Regular',
+  },
+  primaryButton: {
+    ...common.primaryButton,
+    marginTop: 8,
+  },
+  primaryButtonText: {
+    ...common.primaryButtonText,
+  },
+  primaryButtonDisabled: {
+    opacity: 0.5,
+  },
+  hint: {
+    fontSize: 14,
+    color: colors.muted,
+    marginBottom: 8,
+    fontFamily: 'Poppins-Regular',
   },
   errorText: {
-    fontSize: 18,
-    color: 'red',
+    fontSize: 17,
+    color: colors.destructive,
     textAlign: 'center',
-    marginTop: 50,
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    marginTop: 40,
+    fontFamily: 'Poppins-Regular',
   },
 });
 

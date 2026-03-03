@@ -1,70 +1,97 @@
-import React from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, Stack, Link, router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { colors, common } from '../../../constants/theme';
 import { useNotes } from '../../../contexts/NoteContext';
-import { Alert } from 'react-native';
+import { ConfirmModal } from '../../../components/ConfirmModal';
+
+function formatDetailDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const dDay = new Date(d);
+  dDay.setHours(0, 0, 0, 0);
+  if (dDay.getTime() === today.getTime()) return 'Today';
+  if (dDay.getTime() === yesterday.getTime()) return 'Yesterday';
+  const diffDays = Math.floor((today.getTime() - dDay.getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return d.toLocaleDateString();
+}
 
 const NoteDetailScreen: React.FC = () => {
   const { noteId } = useLocalSearchParams();
   const { notes, deleteNote } = useNotes();
   const note = notes.find((n) => n.id === noteId);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Note',
-      'Are you sure you want to delete this note?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          onPress: async () => {
-            if (note) {
-              await deleteNote(note.id);
-              router.back();
-            }
-          },
-          style: 'destructive',
-        },
-      ]
-    );
+  const handleDeleteConfirm = async () => {
+    if (note) {
+      await deleteNote(note.id);
+      router.back();
+    }
   };
 
   if (!note) {
     return (
       <View style={styles.container}>
         <Stack.Screen options={{ title: 'Note Not Found' }} />
-        <Text style={styles.errorText}>Note not found!</Text>
+        <View style={styles.errorWrap}>
+          <Ionicons name="document-outline" size={48} color={colors.muted} style={styles.errorIcon} />
+          <Text style={styles.errorText}>Note not found</Text>
+        </View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      <ConfirmModal
+        visible={deleteModalVisible}
+        title="Delete Note"
+        message="Are you sure you want to delete this note? This cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteModalVisible(false)}
+        variant="destructive"
+      />
       <Stack.Screen
         options={{
-          title: note.title || 'Note Details',
+          title: note.title || 'Note',
+          headerTitleStyle: styles.headerTitle,
           headerRight: () => (
-            <View style={{ flexDirection: 'row', marginRight: 10 }}>
+            <View style={styles.headerRow}>
               <Link href={{ pathname: "/(app)/screens/EditNoteScreen", params: { noteId: note.id } }} asChild>
-                <TouchableOpacity style={[styles.headerButton, { backgroundColor: '#3498DB' }]}>
-                  <Text style={styles.editText}>Edit</Text>
+                <TouchableOpacity style={styles.headerPrimary}>
+                  <Text style={styles.headerPrimaryText}>Edit</Text>
                 </TouchableOpacity>
               </Link>
-              <TouchableOpacity style={[styles.headerButton, { backgroundColor: '#E74C3C' }]} onPress={handleDelete}>
-                <Text style={styles.deleteText}>Delete</Text>
+              <TouchableOpacity style={styles.headerDestructive} onPress={() => setDeleteModalVisible(true)}>
+                <Text style={styles.headerDestructiveText}>Delete</Text>
               </TouchableOpacity>
             </View>
           ),
         }}
       />
-      <Text style={styles.title}>{note.title || 'No Title'}</Text>
-      <Text style={styles.category}>Category: {note.category}</Text>
-      <Text style={styles.date}>Added: {new Date(note.dateAdded).toLocaleDateString()}</Text>
-      {note.dateAdded !== note.dateUpdated && (
-        <Text style={styles.date}>Updated: {new Date(note.dateUpdated).toLocaleDateString()}</Text>
-      )}
-      <View style={styles.separator} />
-      <Text style={styles.text}>{note.text}</Text>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.metaRow}>
+          <View style={styles.categoryPill}>
+            <Ionicons name="folder-outline" size={14} color={colors.primary} />
+            <Text style={styles.categoryPillText}>{note.category}</Text>
+          </View>
+          <Text style={styles.dateText}>
+            {formatDetailDate(note.dateAdded)}
+            {note.dateAdded !== note.dateUpdated && ` · Updated ${formatDetailDate(note.dateUpdated)}`}
+          </Text>
+        </View>
+        <Text style={styles.title}>{note.title || 'Untitled'}</Text>
+        <View style={styles.bodyWrap}>
+          <Text style={styles.body}>{note.text}</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -72,67 +99,117 @@ const NoteDetailScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#F0F2F5', // Light Gray background
+    backgroundColor: colors.screen,
+  },
+  headerTitle: {
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 17,
+    color: colors.title,
+  },
+  scroll: {
+    flex: 1,
+  },
+  content: {
+    padding: 24,
+    paddingBottom: 40,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  categoryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    gap: 6,
+  },
+  categoryPillText: {
+    fontFamily: 'Poppins-Medium',
+    fontSize: 14,
+    color: colors.title,
+  },
+  dateText: {
+    fontFamily: 'Poppins-Regular',
+    fontSize: 13,
+    color: colors.muted,
   },
   title: {
-    fontSize: 28, // Larger title
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#2C3E50', // Darker text for emphasis
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 24,
+    color: colors.title,
+    marginBottom: 20,
+    lineHeight: 32,
+  },
+  bodyWrap: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.inputBorder,
+    ...common.card,
+    marginBottom: 0,
+  },
+  body: {
     fontFamily: 'Poppins-Regular',
-  },
-  category: {
     fontSize: 16,
-    color: '#7F8C8D', // Muted gray
-    marginBottom: 5,
-    fontFamily: 'Inter-Regular',
-  },
-  date: {
-    fontSize: 14,
-    color: '#95A5A6', // Lighter gray
-    marginBottom: 5,
-    fontFamily: 'Inter-Regular',
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#DCDCDC', // Lighter separator
-    marginVertical: 15,
-  },
-  text: {
-    fontSize: 18,
-    color: '#34495E', // Slightly darker text
+    color: colors.body,
     lineHeight: 26,
-    fontFamily: 'Inter-Regular',
+  },
+  errorWrap: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorIcon: {
+    marginBottom: 16,
   },
   errorText: {
-    fontSize: 18,
-    color: 'red',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 17,
+    color: colors.muted,
     textAlign: 'center',
-    marginTop: 50,
-    fontFamily: 'Inter-Regular',
   },
-  headerButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    marginHorizontal: 5,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 8,
+    gap: 8,
+  },
+  headerPrimary: {
+    backgroundColor: colors.primary,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  editText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-    fontFamily: 'Poppins-Regular',
+  headerPrimaryText: {
+    color: colors.primaryText,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
   },
-  deleteText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    fontSize: 15,
-    fontFamily: 'Poppins-Regular',
+  headerDestructive: {
+    backgroundColor: colors.destructive,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerDestructiveText: {
+    color: colors.destructiveText,
+    fontFamily: 'Poppins-SemiBold',
+    fontSize: 14,
   },
 });
 
 export default NoteDetailScreen;
-
