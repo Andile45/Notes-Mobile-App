@@ -1,116 +1,205 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Link, Stack, useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../../constants/theme';
 
 const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (email && password) {
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
       const success = await login(email, password);
       if (success) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert('Login Successful', 'Welcome back!');
-        router.replace('/(app)'); // Navigate to the main app route
+        router.replace('/(app)');
       } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         Alert.alert('Login Failed', 'Invalid email or password.');
       }
-    } else {
-      Alert.alert('Error', 'Please enter both email and password.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+    >
       <Stack.Screen options={{ title: 'Login' }} />
       <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
+
+      <View style={styles.inputWrap}>
+        <Ionicons name="mail-outline" size={22} color={colors.muted} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.input, styles.inputWithIcon]}
+          placeholder="Email"
+          placeholderTextColor={colors.muted}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+      </View>
+
+      <View style={styles.inputWrap}>
+        <Ionicons name="lock-closed-outline" size={22} color={colors.muted} style={styles.inputIcon} />
+        <TextInput
+          style={[styles.input, styles.inputWithIcon, styles.passwordInput]}
+          placeholder="Password"
+          placeholderTextColor={colors.muted}
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry={!showPassword}
+        />
+        <TouchableOpacity
+          style={styles.eyeButton}
+          onPress={() => setShowPassword((p) => !p)}
+          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+        >
+          <Ionicons
+            name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+            size={24}
+            color={colors.muted}
+          />
         </TouchableOpacity>
       </View>
-      <Link href="/(auth)/RegisterScreen" style={styles.registerLink}>
-        Don't have an account? Register
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          onPress={handleLogin}
+          disabled={loading}
+          style={[styles.button, loading && styles.buttonDisabled]}
+        >
+          {loading ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+      <Link href="/(auth)/RegisterScreen" style={styles.registerLink} asChild>
+        <TouchableOpacity disabled={loading}>
+          <Text style={styles.registerLinkText}>Don't have an account? Register</Text>
+        </TouchableOpacity>
       </Link>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between',
-    padding: 20,
-    paddingTop: 80, // Increased padding for better distribution
-    paddingBottom: 40,
-    backgroundColor: '#F0F2F5', // Light Gray background
+    justifyContent: 'center',
+    padding: 28,
+    backgroundColor: '#E0F7FA',
   },
   title: {
-    fontSize: 32, // Larger title
+    fontSize: 34,
     fontWeight: 'bold',
-    marginBottom: 40, // More space below title
+    color: '#00796B',
     textAlign: 'center',
-    color: '#2C3E50', // Darker text for emphasis
+    marginBottom: 40,
     fontFamily: 'Poppins-Regular',
   },
-  input: {
-    height: 55, // Taller input fields
-    borderColor: '#DCDCDC', // Lighter border
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
     borderWidth: 1,
-    borderRadius: 12, // More rounded corners
-    marginBottom: 15,
-    paddingHorizontal: 15,
+    borderColor: '#B2EBF2',
+    borderRadius: 15,
     backgroundColor: '#FFFFFF',
-    color: '#34495E',
-    shadowColor: '#000', // Shadow for iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3, // Elevation for Android
-    fontFamily: 'Inter-Regular', // Apply Inter font
-  },
-  buttonContainer: {
-    backgroundColor: '#4CAF50', // Green button
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginVertical: 20,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
+  },
+  inputIcon: {
+    marginLeft: 16,
+  },
+  input: {
+    flex: 1,
+    height: 55,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
+    color: '#004D40',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 16,
+  },
+  inputWithIcon: {
+    paddingLeft: 8,
+  },
+  passwordInput: {
+    paddingRight: 48,
+  },
+  eyeButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  button: {
+    backgroundColor: '#00BCD4',
+    borderRadius: 15,
+    paddingVertical: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: '#FFFFFF',
     textAlign: 'center',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'Poppins-Regular', // Apply Poppins font
+    fontFamily: 'Poppins-Regular',
   },
   registerLink: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: '#3498DB', // Slightly darker blue
-    fontSize: 16, // Larger link text
-    fontFamily: 'Inter-Regular', // Apply Inter font
+    marginTop: 24,
+    alignSelf: 'center',
+  },
+  registerLinkText: {
+    color: '#0097A7',
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
   },
 });
 
