@@ -1,7 +1,8 @@
 import { useFonts } from "expo-font";
-import { SplashScreen, Stack } from "expo-router";
+import { Slot, SplashScreen, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { Text, View } from "react-native";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { colors } from "../constants/theme";
 import { AuthProvider, useAuth } from "../contexts/AuthContext";
 import { useInitialAuth } from "../hooks/useInitialAuth";
 
@@ -57,27 +58,46 @@ export default function RootLayout() {
 
 function RootLayoutContent() {
   const { user, loading } = useAuth();
-  const { isInitialAuthChecked } = useInitialAuth(); // Custom hook to check initial auth status
+  const { isInitialAuthChecked } = useInitialAuth();
+  const router = useRouter();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (loading || !isInitialAuthChecked) return;
+
+    const inAuthGroup = segments[0] === "(auth)";
+
+    // Only redirect when auth state doesn't match current route (prevents remount loop)
+    if (!user && !inAuthGroup) {
+      router.replace("/(auth)/LoginScreen");
+    } else if (user && inAuthGroup) {
+      router.replace("/(app)");
+    }
+  }, [user, loading, isInitialAuthChecked, segments, router]);
 
   if (loading || !isInitialAuthChecked) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
 
-  return (
-    <>
-      {user ? (
-        <Stack>
-          <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        </Stack>
-      ) : (
-        <Stack>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack>
-      )}
-    </>
-  );
+  return <Slot />;
 }
+
+const styles = StyleSheet.create({
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.screen,
+    gap: 16,
+  },
+  loadingText: {
+    color: colors.title,
+    fontSize: 16,
+    fontFamily: "Poppins-Regular",
+  },
+});
